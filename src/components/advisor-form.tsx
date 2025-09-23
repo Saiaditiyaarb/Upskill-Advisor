@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { useState } from "react"
@@ -46,7 +44,7 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-busy={isLoading}>
           <div className="space-y-2">
             <Label htmlFor="skills">Current Skills</Label>
             <Input
@@ -87,7 +85,7 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Getting Advice..." : "Get Learning Plan"}
+            {isLoading ? "Building your personalized plan..." : "Get Learning Plan"}
           </Button>
         </form>
       </CardContent>

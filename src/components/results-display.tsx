@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { AdviceData } from "@/lib/api"
@@ -17,12 +19,15 @@ export function ResultsDisplay({ data }: ResultsDisplayProps) {
         <CardContent>
           <div className="space-y-4">
             {data.plan.map((course, index) => (
-              <div key={course.course_id} className="border rounded-lg p-4">
+              <div key={course.course_id} className="border rounded-lg p-6">
+                {" "}
+                {/* Increased padding for better readability with longer text */}
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline">Course {index + 1}</Badge>
                   <h3 className="font-semibold">{course.course_id}</h3>
                 </div>
-                <p className="text-muted-foreground">{course.why}</p>
+                {/* Allow multi-line 'why' text and improve readability */}
+                <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{course.why}</p>
               </div>
             ))}
           </div>
@@ -55,7 +60,8 @@ export function ResultsDisplay({ data }: ResultsDisplayProps) {
             <CardTitle>Additional Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{data.notes}</p>
+            {/* Allow multi-line notes and improve readability */}
+            <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{data.notes}</p>
           </CardContent>
         </Card>
       )}
