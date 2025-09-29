@@ -16,6 +16,7 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
   const [skills, setSkills] = useState("")
   const [years, setYears] = useState("")
   const [goalRole, setGoalRole] = useState("")
+  const [searchOnline, setSearchOnline] = useState(true)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,6 +31,7 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
       skills: skillsArray,
       years: Number.parseInt(years, 10) || 0,
       goal_role: goalRole.trim(),
+      search_online: searchOnline,
     }
 
     onSubmit(profile)
@@ -82,6 +84,20 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
               onChange={(e) => setGoalRole(e.target.value)}
               required
             />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <input
+                id="searchOnline"
+                type="checkbox"
+                checked={searchOnline}
+                onChange={(e) => setSearchOnline(e.target.checked)}
+                className="h-4 w-4 border rounded"
+              />
+              <Label htmlFor="searchOnline">Include online course search</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">When off, recommendations will use only local data.</p>
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
