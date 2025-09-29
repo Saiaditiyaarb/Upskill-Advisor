@@ -1,69 +1,74 @@
-# React + TypeScript + Vite
+# Upskill Advisor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Upskill Advisor is a web application that provides personalized learning recommendations to help users advance their careers. By inputting their current skills, years of experience, and career goals, users receive a tailored learning plan, a skill gap analysis, and a list of recommended courses.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+* *Personalized Learning Plans*: Generates a step-by-step learning plan based on user inputs.
+* *Skill Gap Analysis*: Identifies missing sub-skills for the user's target role.
+* *Recommended Courses*: Suggests relevant online courses to bridge skill gaps.
+* *Interactive UI*: A clean and intuitive interface for a seamless user experience.
+* *Data Visualization*: Includes charts to display metrics like accuracy scores, cost analysis, and latency.
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+* *Framework*: React 19
+* *Language*: TypeScript
+* *Build Tool*: Vite
+* *Styling*: Tailwind CSS
+* *State Management*: React Hooks (useState, useMemo)
+* *HTTP Client*: Axios
+* *Charting Library*: Recharts
+* *Linting*: ESLint
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Prerequisites
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+You need to have Node.js and npm (or a compatible package manager like Yarn or pnpm) installed on your machine.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+* [Node.js](https://nodejs.org/) (v20.x or higher recommended)
+* [npm](https://www.npmjs.com/get-npm)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Installation
+
+1.  Clone the repository to your local machine:
+    sh
+    git clone https://github.com/Saiaditiyaarb/Upskill-Advisor.git
+
+2.  Navigate to the project directory:
+    sh
+    cd upskill-advisor
+
+3.  Install the dependencies:
+    sh
+    npm install
+
+
+## Available Scripts
+
+In the project directory, you can run the following commands:
+
+### npm run dev
+
+Runs the app in development mode. Open [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173) to view it in the browser. The page will reload if you make edits.
+
+### npm run build
+
+Builds the app for production to the dist folder. It correctly bundles React in production mode and optimizes the build for the best performance.
+
+### npm run lint
+
+Lints the project files using ESLint to check for code quality and style issues.
+
+### npm run preview
+
+Serves the production build locally to preview the app before deploying.
+
+## Backend Integration
+
+This frontend application is designed to work with a backend service that provides the learning recommendations. The backend repository can be found at the following  link:
+
+[https://github.com/Saiaditiyaarb/Upskill-Advisor-Backend.git]
