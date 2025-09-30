@@ -3,246 +3,274 @@ import type { AdviceData } from "@/lib/api"
 
 interface ResultsPDFProps {
     data: AdviceData
-    sortedCourses: any[] // Using any[] to match the structure in ResultsDisplay
+    sortedCourses: any[]
 }
 
-// Define styles for the PDF - Professional Black & White Design
+// Clean, professional PDF design - Essential Information Only
 const styles = StyleSheet.create({
     page: {
         fontFamily: "Helvetica",
         fontSize: 10,
-        padding: 20,
+        padding: 30,
         backgroundColor: "#ffffff",
-        lineHeight: 1.3,
+        lineHeight: 1.4,
         color: "#000000",
     },
-    title: {
-        fontSize: 18,
+    header: {
+        fontSize: 22,
         fontWeight: "bold",
-        marginBottom: 10,
+        marginBottom: 8,
         textAlign: "center",
         color: "#000000",
-        borderBottom: "1px solid #000000",
-        paddingBottom: 8,
     },
-    subtitle: {
-        fontSize: 12,
-        fontWeight: "bold",
-        marginBottom: 6,
-        color: "#000000",
-        textTransform: "uppercase",
-        letterSpacing: 0.5,
-    },
-    section: {
-        marginBottom: 15,
-        border: "1px solid #000000",
-        padding: 12,
-        backgroundColor: "#ffffff",
+    subheader: {
+        fontSize: 10,
+        marginBottom: 20,
+        textAlign: "center",
+        color: "#666666",
     },
     sectionTitle: {
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: "bold",
-        marginBottom: 8,
-        borderBottom: "1px solid #000000",
-        paddingBottom: 4,
+        marginTop: 15,
+        marginBottom: 10,
+        borderBottom: "2px solid #000000",
+        paddingBottom: 5,
         color: "#000000",
     },
-    subsection: {
-        marginBottom: 8,
-        padding: 6,
-        backgroundColor: "#ffffff",
-        border: "1px solid #cccccc",
+    planItem: {
+        marginBottom: 12,
+        padding: 10,
+        backgroundColor: "#f9f9f9",
+        border: "1px solid #e0e0e0",
     },
-    subsectionTitle: {
+    planTitle: {
         fontSize: 11,
         fontWeight: "bold",
         marginBottom: 4,
         color: "#000000",
     },
-    text: {
-        marginBottom: 4,
-        color: "#000000",
-        lineHeight: 1.2,
+    planDescription: {
         fontSize: 9,
+        color: "#333333",
+        marginBottom: 4,
+        lineHeight: 1.3,
     },
     badge: {
         backgroundColor: "#000000",
         color: "#ffffff",
-        padding: "2px 6px",
-        marginRight: 4,
-        marginBottom: 2,
+        padding: "2px 8px",
+        marginRight: 6,
+        marginBottom: 4,
         fontSize: 8,
         fontWeight: "bold",
+    },
+    courseCard: {
+        marginBottom: 12,
+        padding: 10,
+        border: "1px solid #000000",
+        backgroundColor: "#ffffff",
+    },
+    courseTitle: {
+        fontSize: 11,
+        fontWeight: "bold",
+        marginBottom: 4,
+        color: "#000000",
+    },
+    courseDetails: {
+        fontSize: 9,
+        color: "#333333",
+        marginBottom: 3,
     },
     skillBadge: {
         backgroundColor: "#666666",
         color: "#ffffff",
-        padding: "1px 4px",
-        marginRight: 3,
-        marginBottom: 2,
+        padding: "1px 5px",
+        marginRight: 4,
+        marginBottom: 3,
         fontSize: 7,
     },
     flexRow: {
         flexDirection: "row",
         flexWrap: "wrap",
         alignItems: "center",
+        marginBottom: 5,
+    },
+    gapSection: {
+        marginBottom: 10,
+        padding: 8,
+        backgroundColor: "#f5f5f5",
+        border: "1px solid #d0d0d0",
+    },
+    gapTitle: {
+        fontSize: 10,
+        fontWeight: "bold",
         marginBottom: 4,
-    },
-    capitalize: {
-        textTransform: "capitalize",
-    },
-    link: {
         color: "#000000",
-        textDecoration: "underline",
-        fontSize: 8,
     },
-    courseGrid: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        justifyContent: "space-between",
-    },
-    courseCard: {
-        width: "48%",
-        border: "1px solid #000000",
-        padding: 8,
-        marginBottom: 8,
-        backgroundColor: "#ffffff",
-    },
-    timelineBox: {
-        backgroundColor: "#ffffff",
-        border: "1px solid #000000",
-        padding: 8,
-        marginBottom: 10,
-    },
-    metricsBox: {
-        backgroundColor: "#ffffff",
-        border: "1px solid #000000",
-        padding: 8,
-        marginBottom: 10,
+    gapItem: {
+        fontSize: 9,
+        color: "#333333",
+        marginLeft: 10,
+        marginBottom: 2,
     },
     footer: {
         position: "absolute",
-        bottom: 15,
-        left: 20,
-        right: 20,
+        bottom: 20,
+        left: 30,
+        right: 30,
         textAlign: "center",
         fontSize: 8,
-        color: "#000000",
-        borderTop: "1px solid #000000",
+        color: "#666666",
+        borderTop: "1px solid #cccccc",
         paddingTop: 8,
+    },
+    timeline: {
+        fontSize: 12,
+        fontWeight: "bold",
+        marginBottom: 15,
+        padding: 8,
+        backgroundColor: "#f0f0f0",
+        textAlign: "center",
+    },
+    noteBox: {
+        padding: 10,
+        backgroundColor: "#f9f9f9",
+        border: "1px solid #e0e0e0",
+        fontSize: 9,
+        lineHeight: 1.4,
     },
 })
 
 export function ResultsPDF({ data, sortedCourses }: ResultsPDFProps) {
-    const hasTimeline = !!(data as any)?.timeline?.weeks
+    const hasTimeline = !!(data as any)?.timeline?.total_weeks
     const gapEntries = Object.entries(data.gap_map || {})
+    const timelineData = (data as any)?.timeline
 
     return (
         <Document>
             <Page style={styles.page}>
                 <View>
-                    <Text style={styles.title}>PERSONALIZED LEARNING PLAN</Text>
+                    {/* Header */}
+                    <Text style={styles.header}>Your Personalized Learning Plan</Text>
+                    <Text style={styles.subheader}>
+                        Generated on {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </Text>
+
+                    {/* Timeline Overview */}
                     {hasTimeline && (
-                        <View style={styles.timelineBox}>
-                            <Text style={styles.subtitle}>Timeline: {(data as any).timeline.weeks} weeks</Text>
-                        </View>
+                        <Text style={styles.timeline}>
+                            Estimated Duration: {timelineData.total_weeks} weeks
+                        </Text>
                     )}
 
-                    {/* Learning Plan Section */}
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>LEARNING PLAN</Text>
-                        {data.plan.map((step: any, index: number) => (
-                            <View key={index} style={styles.subsection}>
-                                <View style={styles.flexRow}>
-                                    <Text style={styles.badge}>Step {index + 1}</Text>
-                                    {step.skill && <Text style={[styles.badge, styles.capitalize]}>{step.skill}</Text>}
-                                    {step.action && <Text style={styles.badge}>{String(step.action).toUpperCase()}</Text>}
-                                    {step.estimated_weeks && (
-                                        <Text style={styles.badge}>{step.estimated_weeks} weeks</Text>
+                    {/* Learning Path */}
+                    <Text style={styles.sectionTitle}>📚 Your Learning Path</Text>
+                    {data.plan && data.plan.length > 0 ? (
+                        data.plan.map((step: any, index: number) => {
+                            const course = sortedCourses.find(c => c.course_id === step.course_id)
+                            return (
+                                <View key={index} style={styles.planItem}>
+                                    <View style={styles.flexRow}>
+                                        <Text style={styles.badge}>STEP {index + 1}</Text>
+                                        {step.estimated_weeks && (
+                                            <Text style={styles.badge}>{step.estimated_weeks} WEEKS</Text>
+                                        )}
+                                    </View>
+                                    <Text style={styles.planTitle}>
+                                        {course?.title || step.resource || step.skill || "Learning Step"}
+                                    </Text>
+                                    {step.why && (
+                                        <Text style={styles.planDescription}>{step.why}</Text>
+                                    )}
+                                    {course && (
+                                        <>
+                                            {course.provider && (
+                                                <Text style={styles.courseDetails}>Provider: {course.provider}</Text>
+                                            )}
+                                            {course.difficulty && (
+                                                <Text style={styles.courseDetails}>Difficulty: {course.difficulty}</Text>
+                                            )}
+                                            {course.url && (
+                                                <Link src={course.url} style={styles.courseDetails}>
+                                                    🔗 {course.url}
+                                                </Link>
+                                            )}
+                                        </>
                                     )}
                                 </View>
-                                <Text style={styles.subsectionTitle}>
-                                    {step.resource || "Learning Step"}
-                                </Text>
-                                {step.why && <Text style={styles.text}>{step.why}</Text>}
-                            </View>
-                        ))}
-                    </View>
+                            )
+                        })
+                    ) : (
+                        <Text style={styles.planDescription}>No learning plan available</Text>
+                    )}
 
-                    {/* Skill Gap Analysis Section */}
+                    {/* Skill Gaps */}
                     {gapEntries.length > 0 && (
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>SKILL GAP ANALYSIS</Text>
-                            {gapEntries.map(([skill, gap]) => (
-                                <View key={skill} style={styles.subsection}>
-                                    <Text style={[styles.subsectionTitle, styles.capitalize]}>{skill}</Text>
-                                    <View style={styles.flexRow}>
-                                        {Array.isArray(gap) ? (
-                                            gap.map((g: string, i: number) => (
-                                                <Text key={i} style={styles.skillBadge}>{g}</Text>
-                                            ))
-                                        ) : (
-                                            <Text style={styles.text}>{String(gap)}</Text>
-                                        )}
-                                    </View>
+                        <>
+                            <Text style={styles.sectionTitle}>🎯 Skills to Develop</Text>
+                            {gapEntries.map(([category, skills]) => (
+                                <View key={category} style={styles.gapSection}>
+                                    <Text style={styles.gapTitle}>{category}</Text>
+                                    {Array.isArray(skills) ? (
+                                        skills.slice(0, 8).map((skill: string, i: number) => (
+                                            <Text key={i} style={styles.gapItem}>• {skill}</Text>
+                                        ))
+                                    ) : (
+                                        <Text style={styles.gapItem}>{String(skills)}</Text>
+                                    )}
                                 </View>
                             ))}
-                        </View>
+                        </>
                     )}
 
-                    {/* Recommended Courses Section */}
-                    {sortedCourses.length > 0 && (
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>RECOMMENDED COURSES</Text>
-                            <View style={styles.courseGrid}>
-                                {sortedCourses.map((c: any, i: number) => (
-                                    <View key={c.course_id ?? i} style={styles.courseCard}>
-                                        <Text style={styles.subsectionTitle}>{c.title ?? c.course_id}</Text>
-                                        <View style={styles.flexRow}>
-                                            {c.provider && <Text style={styles.badge}>{c.provider}</Text>}
-                                            {c.difficulty && <Text style={[styles.badge, styles.capitalize]}>{String(c.difficulty)}</Text>}
-                                        </View>
-                                        {Number.isFinite(c.duration_weeks) && (
-                                            <Text style={styles.text}>Duration: {c.duration_weeks} weeks</Text>
-                                        )}
-                                        {c.metadata?.rating && (
-                                            <Text style={styles.text}>Rating: ★ {c.metadata.rating}</Text>
-                                        )}
-                                        {c.skills && c.skills.length > 0 && (
-                                            <View>
-                                                <Text style={styles.text}>Skills:</Text>
-                                                <View style={styles.flexRow}>
-                                                    {c.skills.slice(0, 3).map((skill: string, idx: number) => (
-                                                        <Text key={idx} style={styles.skillBadge}>{skill}</Text>
-                                                    ))}
-                                                    {c.skills.length > 3 && (
-                                                        <Text style={styles.text}>+{c.skills.length - 3} more</Text>
-                                                    )}
-                                                </View>
-                                            </View>
-                                        )}
-                                        {c.url && (
-                                            <Link src={c.url} style={styles.link}>
-                                                View Course →
-                                            </Link>
-                                        )}
+                    {/* Recommended Courses */}
+                    {sortedCourses && sortedCourses.length > 0 && (
+                        <>
+                            <Text style={styles.sectionTitle}>🌟 Top Recommended Courses</Text>
+                            {sortedCourses.map((course: any, i: number) => (
+                                <View key={i} style={styles.courseCard}>
+                                    <Text style={styles.courseTitle}>{course.title}</Text>
+                                    <View style={styles.flexRow}>
+                                        {course.provider && <Text style={styles.badge}>{course.provider}</Text>}
+                                        {course.difficulty && <Text style={styles.badge}>{course.difficulty.toUpperCase()}</Text>}
+                                        {course.duration_weeks && <Text style={styles.badge}>{course.duration_weeks} WEEKS</Text>}
                                     </View>
-                                ))}
-                            </View>
-                        </View>
+                                    {course.skills && course.skills.length > 0 && (
+                                        <View style={styles.flexRow}>
+                                            <Text style={styles.courseDetails}>Skills: </Text>
+                                            {course.skills.slice(0, 5).map((skill: string, idx: number) => (
+                                                <Text key={idx} style={styles.skillBadge}>{skill}</Text>
+                                            ))}
+                                        </View>
+                                    )}
+                                    {course.metadata?.rating && (
+                                        <Text style={styles.courseDetails}>⭐ Rating: {course.metadata.rating}</Text>
+                                    )}
+                                    {course.url && (
+                                        <Link src={course.url} style={styles.courseDetails}>
+                                            🔗 View Course
+                                        </Link>
+                                    )}
+                                </View>
+                            ))}
+                        </>
                     )}
 
-                    {/* Additional Notes Section */}
+                    {/* Additional Notes */}
                     {data.notes && (
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>ADDITIONAL NOTES</Text>
-                            <Text style={styles.text}>{data.notes}</Text>
-                        </View>
+                        <>
+                            <Text style={styles.sectionTitle}>💡 Additional Insights</Text>
+                            <View style={styles.noteBox}>
+                                <Text>{data.notes}</Text>
+                            </View>
+                        </>
                     )}
 
                     {/* Footer */}
                     <View style={styles.footer}>
-                        <Text>Generated by Upskill Advisor • {new Date().toLocaleDateString()}</Text>
+                        <Text>Generated by Upskill Advisor • Your AI-Powered Learning Companion</Text>
+                        <Text style={{ marginTop: 3 }}>Continue learning and growing your skills! 🚀</Text>
                     </View>
                 </View>
             </Page>

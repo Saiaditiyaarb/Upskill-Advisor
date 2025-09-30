@@ -1,12 +1,12 @@
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Moon, Sun, Plus, X, Star, Clock, Target } from "lucide-react";
-import type { UserProfile, SkillDetail } from "@/lib/api";
+import { Moon, Sun, Plus, X, Clock, Target } from "lucide-react";
+import type { UserProfile } from "@/lib/api";
 
 interface AdvisorFormProps {
     onSubmit: (profile: UserProfile) => void;
@@ -24,8 +24,11 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
     const [newSkillExpertise, setNewSkillExpertise] = useState<"Beginner" | "Intermediate" | "Advanced">("Intermediate");
     const [years, setYears] = useState("");
     const [goalRole, setGoalRole] = useState("");
-    const [searchOnline, setSearchOnline] = useState(true);
+    const [searchOnline, setSearchOnline] = useState(false) // Default to offline mode for better performance;
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [popularSkills, setPopularSkills] = useState<string[]>([]);
+    const [showSkillSuggestions, setShowSkillSuggestions] = useState(false);
+    const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
 
     const addSkill = () => {
         if (newSkill.trim() && !skills.find(s => s.name.toLowerCase() === newSkill.toLowerCase())) {
@@ -54,8 +57,51 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
         onSubmit(profile);
     };
 
+    // Fetch popular skills on mount
+    useEffect(() => {
+        const fetchPopularSkills = async () => {
+            try {
+                const response = await fetch("/api/v1/courses/skills?limit=100");
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.data && result.data.skills) {
+                        const skillNames = result.data.skills.map((s: any) => s.skill);
+                        setPopularSkills(skillNames);
+                    }
+                }
+            } catch (error) {
+                console.warn("Failed to fetch skill suggestions:", error);
+            }
+        };
+        fetchPopularSkills();
+    }, []);
+
     const toggleTheme = () => {
         setIsDarkMode(!isDarkMode);
+    };
+
+    // Handle skill input change with suggestions
+    const handleSkillInputChange = (value: string) => {
+        setNewSkill(value);
+        if (value.length > 1 && popularSkills.length > 0) {
+            const filtered = popularSkills.filter(skill => 
+                skill.toLowerCase().includes(value.toLowerCase()) &&
+                !skills.find(s => s.name.toLowerCase() === skill.toLowerCase())
+            ).slice(0, 10);
+            setFilteredSuggestions(filtered);
+            setShowSkillSuggestions(filtered.length > 0);
+        } else {
+            setShowSkillSuggestions(false);
+        }
+    };
+
+    // Add skill from suggestion
+    const addSkillFromSuggestion = (skillName: string) => {
+        if (!skills.find(s => s.name.toLowerCase() === skillName.toLowerCase())) {
+            setSkills([...skills, { name: skillName, expertise: newSkillExpertise }]);
+            setNewSkill("");
+            setShowSkillSuggestions(false);
+        }
     };
 
     const getExpertiseColor = (expertise: string) => {
@@ -162,15 +208,38 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
                                     </Label>
                                     
                                     {/* Add Skill Input */}
-                                    <div className="flex gap-2">
-                                        <Input
-                                            id="new-skill"
-                                            type="text"
-                                            placeholder="e.g., Python, SQL, JavaScript"
-                                            value={newSkill}
-                                            onChange={(e) => setNewSkill(e.target.value)}
-                                            className="flex-1"
-                                        />
+                                    <div className="flex gap-2 relative">
+                                        <div className="flex-1 relative">
+                                            <Input
+                                                id="new-skill"
+                                                type="text"
+                                                placeholder="e.g., Python, SQL, JavaScript"
+                                                value={newSkill}
+                                                onChange={(e) => handleSkillInputChange(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        addSkill();
+                                                    }
+                                                }}
+                                                className="flex-1"
+                                            />
+                                            {/* Skill Suggestions Dropdown */}
+                                            {showSkillSuggestions && filteredSuggestions.length > 0 && (
+                                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                    {filteredSuggestions.map((skill, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            onClick={() => addSkillFromSuggestion(skill)}
+                                                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 text-black"
+                                                        >
+                                                            {skill}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                         <select
                                             value={newSkillExpertise}
                                             onChange={(e) => setNewSkillExpertise(e.target.value as "Beginner" | "Intermediate" | "Advanced")}
@@ -255,17 +324,25 @@ export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
                                 </div>
 
                                 {/* Search Online Option */}
-                                <div className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        id="search_online"
-                                        checked={searchOnline}
-                                        onChange={(e) => setSearchOnline(e.target.checked)}
-                                        className="rounded"
-                                    />
-                                    <Label htmlFor="search_online" className="text-sm">
-                                        Include online course search for latest recommendations
-                                    </Label>
+                                <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            id="search_online"
+                                            checked={searchOnline}
+                                            onChange={(e) => setSearchOnline(e.target.checked)}
+                                            className="rounded"
+                                        />
+                                        <Label htmlFor="search_online" className="text-sm">
+                                            Include online course search for latest recommendations
+                                        </Label>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground pl-6">
+                                        {searchOnline 
+                                            ? "Online mode: Slower but includes latest courses from the web" 
+                                            : "Offline mode: Faster response using local LLM and cached courses"
+                                        }
+                                    </div>
                                 </div>
 
                                 {/* Submit Button */}

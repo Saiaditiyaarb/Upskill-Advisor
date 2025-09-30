@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { AdviceData } from "@/lib/api"
-import { ResultsPDF } from "./results-pdf" // Import the new PDF component
+import { ResultsPDF } from "./results-pdf"
+import { SkillMap } from "./skill-map"
+import { RequestMetrics } from "./request-metrics"
 
 interface ResultsDisplayProps {
     data: AdviceData
@@ -53,6 +55,13 @@ export function ResultsDisplay({ data }: ResultsDisplayProps) {
 
     return (
         <div className="w-full max-w-5xl mx-auto space-y-6">
+            {/* Skill Map and Timeline */}
+            <SkillMap 
+                skillMap={data.metrics?.skill_map}
+                timeline={data.timeline}
+                courses={data.recommended_courses || []}
+            />
+            
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -136,13 +145,14 @@ export function ResultsDisplay({ data }: ResultsDisplayProps) {
                 </CardContent>
             </Card>
 
-            {gapEntries.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Skill Gap Analysis</CardTitle>
-                        <CardDescription>Missing sub-skills for your target role</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+            {/* Skill Gap Analysis */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Skill Gap Analysis</CardTitle>
+                    <CardDescription>Missing sub-skills for your target role</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {gapEntries.length > 0 ? (
                         <div className="space-y-4">
                             {gapEntries.map(([skill, gap]) => (
                                 <div key={skill} className="border rounded-lg p-4">
@@ -159,9 +169,14 @@ export function ResultsDisplay({ data }: ResultsDisplayProps) {
                                 </div>
                             ))}
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <div className="text-lg mb-2">No specific skill gaps identified</div>
+                            <div className="text-sm">The recommended courses should cover all necessary skills for your target role.</div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             {sortedCourses && sortedCourses.length > 0 && (
                 <Card>
@@ -233,31 +248,25 @@ export function ResultsDisplay({ data }: ResultsDisplayProps) {
                 </Card>
             )}
 
-            {data.notes && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Additional Notes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{data.notes}</p>
-                    </CardContent>
-                </Card>
-            )}
-
+            {/* Additional Notes */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Raw Response Data</CardTitle>
-                    <CardDescription>For debugging purposes</CardDescription>
+                    <CardTitle>Additional Notes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <details>
-                        <summary className="cursor-pointer text-sm text-muted-foreground">Show raw JSON</summary>
-                        <pre className="mt-3 text-xs bg-muted p-4 rounded-lg overflow-auto max-h-96 overflow-y-auto">
-                            {JSON.stringify(data, null, 2)}
-                        </pre>
-                    </details>
+                    {data.notes ? (
+                        <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{data.notes}</p>
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <div className="text-lg mb-2">No additional notes available</div>
+                            <div className="text-sm">The learning plan has been generated based on your profile and available courses.</div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
+
+            {/* Request Metrics - Shows metrics from current request */}
+            <RequestMetrics data={data} />
         </div>
     )
 }

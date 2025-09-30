@@ -23,7 +23,46 @@ export interface AdviseResult {
     gap_map: Record<string, string[]>;
     recommended_courses: Course[];
     notes?: string;
-    metrics?: Record<string, any>;
+    metrics?: {
+        processing_time_ms?: number;
+        skill_map?: {
+            covered_skills: string[];
+            missing_skills: string[];
+            coverage_percentage: number;
+            skill_courses: Record<string, Array<{id: string, title: string, difficulty: string}>>;
+            total_skills_available: number;
+        };
+        recommendation_scores?: Array<{
+            course: Course;
+            total_score: number;
+            skill_match_score: number;
+            difficulty_score: number;
+            duration_score: number;
+            provider_score: number;
+            rating_score: number;
+            explanations: string[];
+            skill_match_percentage: number;
+        }>;
+        timeline?: {
+            total_weeks: number;
+            phases: Array<{
+                phase: string;
+                weeks: string;
+                focus: string;
+                course_id?: string;
+                difficulty?: string;
+            }>;
+            milestones: Array<{
+                week: number;
+                description: string;
+                phase: string;
+            }>;
+            estimated_completion_date: string;
+        };
+        performance_target_met?: boolean;
+        courses_analyzed?: number;
+        courses_selected?: number;
+    };
     alternative_plan?: AdviseResult;
     timeline?: {
         total_weeks: number;
@@ -31,9 +70,20 @@ export interface AdviseResult {
             phase: string;
             weeks: string;
             focus: string;
+            course_id?: string;
+            difficulty?: string;
         }>;
+        milestones?: Array<{
+            week: number;
+            description: string;
+            phase: string;
+        }>;
+        estimated_completion_date?: string;
     };
 }
+
+// Alias for backward compatibility
+export type AdviceData = AdviseResult;
 
 export interface Course {
     course_id: string;
@@ -72,6 +122,39 @@ export interface MetricsData {
     }>;
     cost: Array<{
         timestamp: string;
+        component: string;
+        operation: string;
+        cost_usd: number;
+        tokens_used?: number;
+        model_name?: string;
+        metadata: Record<string, any>;
+    }>;
+}
+
+// Updated interface to match backend response format
+export interface MetricsReportsResponse {
+    accuracy?: Array<{
+        timestamp: string;
+        request_id: string;
+        component: string;
+        operation: string;
+        accuracy_score: number;
+        total_items: number;
+        correct_items: number;
+        metadata: Record<string, any>;
+    }>;
+    latency?: Array<{
+        timestamp: string;
+        request_id: string;
+        component: string;
+        operation: string;
+        duration_ms: number;
+        success: boolean;
+        metadata: Record<string, any>;
+    }>;
+    cost?: Array<{
+        timestamp: string;
+        request_id: string;
         component: string;
         operation: string;
         cost_usd: number;
@@ -150,8 +233,16 @@ export async function getMetrics(): Promise<MetricsData> {
         throw new Error("Failed to fetch metrics");
     }
 
-    const result: ApiResponse<MetricsData> = await response.json();
-    return result.data;
+    const result: ApiResponse<MetricsReportsResponse> = await response.json();
+    
+    // Transform the response to match our expected format
+    const metricsData: MetricsData = {
+        accuracy: result.data.accuracy || [],
+        latency: result.data.latency || [],
+        cost: result.data.cost || []
+    };
+    
+    return metricsData;
 }
 
 export async function getCourseStats(): Promise<CourseStats> {
