@@ -1,110 +1,303 @@
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { UserProfile } from "@/lib/api"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Moon, Sun, Plus, X, Star, Clock, Target } from "lucide-react";
+import type { UserProfile, SkillDetail } from "@/lib/api";
 
 interface AdvisorFormProps {
-  onSubmit: (profile: UserProfile) => void
-  isLoading: boolean
+    onSubmit: (profile: UserProfile) => void;
+    isLoading: boolean;
+}
+
+interface SkillInput {
+    name: string;
+    expertise: "Beginner" | "Intermediate" | "Advanced";
 }
 
 export function AdvisorForm({ onSubmit, isLoading }: AdvisorFormProps) {
-  const [skills, setSkills] = useState("")
-  const [years, setYears] = useState("")
-  const [goalRole, setGoalRole] = useState("")
-  const [searchOnline, setSearchOnline] = useState(true)
+    const [skills, setSkills] = useState<SkillInput[]>([]);
+    const [newSkill, setNewSkill] = useState("");
+    const [newSkillExpertise, setNewSkillExpertise] = useState<"Beginner" | "Intermediate" | "Advanced">("Intermediate");
+    const [years, setYears] = useState("");
+    const [goalRole, setGoalRole] = useState("");
+    const [searchOnline, setSearchOnline] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    const addSkill = () => {
+        if (newSkill.trim() && !skills.find(s => s.name.toLowerCase() === newSkill.toLowerCase())) {
+            setSkills([...skills, { name: newSkill.trim(), expertise: newSkillExpertise }]);
+            setNewSkill("");
+        }
+    };
 
-    // Parse skills from comma-separated string
-    const skillsArray = skills
-      .split(",")
-      .map((skill) => skill.trim())
-      .filter((skill) => skill.length > 0)
+    const removeSkill = (index: number) => {
+        setSkills(skills.filter((_, i) => i !== index));
+    };
 
-    const profile: UserProfile = {
-      skills: skillsArray,
-      years: Number.parseInt(years, 10) || 0,
-      goal_role: goalRole.trim(),
-      search_online: searchOnline,
-    }
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
 
-    onSubmit(profile)
-  }
+        const profile: UserProfile = {
+            skills: skills.map(skill => ({
+                name: skill.name,
+                expertise: skill.expertise,
+            })),
+            years: Number.parseInt(years, 10) || 0,
+            goal_role: goalRole.trim(),
+            search_online: searchOnline,
+        };
 
-  return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Upskill Advisor</CardTitle>
-        <CardDescription>
-          Get personalized learning recommendations based on your current skills and career goals.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4" aria-busy={isLoading}>
-          <div className="space-y-2">
-            <Label htmlFor="skills">Current Skills</Label>
-            <Input
-              id="skills"
-              type="text"
-              placeholder="e.g., Python, SQL, JavaScript"
-              value={skills}
-              onChange={(e) => setSkills(e.target.value)}
-              required
-            />
-            <p className="text-sm text-muted-foreground">Enter your skills separated by commas</p>
-          </div>
+        onSubmit(profile);
+    };
 
-          <div className="space-y-2">
-            <Label htmlFor="years">Years of Experience</Label>
-            <Input
-              id="years"
-              type="number"
-              min="0"
-              max="50"
-              placeholder="e.g., 2"
-              value={years}
-              onChange={(e) => setYears(e.target.value)}
-              required
-            />
-          </div>
+    const toggleTheme = () => {
+        setIsDarkMode(!isDarkMode);
+    };
 
-          <div className="space-y-2">
-            <Label htmlFor="goalRole">Goal Role</Label>
-            <Input
-              id="goalRole"
-              type="text"
-              placeholder="e.g., Data Scientist"
-              value={goalRole}
-              onChange={(e) => setGoalRole(e.target.value)}
-              required
-            />
-          </div>
+    const getExpertiseColor = (expertise: string) => {
+        switch (expertise) {
+            case "Beginner": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+            case "Intermediate": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+            case "Advanced": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+            default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+        }
+    };
 
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <input
-                id="searchOnline"
-                type="checkbox"
-                checked={searchOnline}
-                onChange={(e) => setSearchOnline(e.target.checked)}
-                className="h-4 w-4 border rounded"
-              />
-              <Label htmlFor="searchOnline">Include online course search</Label>
+    return (
+        <div className="fixed inset-0 w-full h-full flex overflow-hidden">
+            {/* Left Side - Hero Section */}
+            <div
+                className={`w-1/2 flex items-center justify-center p-8 transition-colors duration-300 ${
+                    isDarkMode ? 'bg-white text-black' : 'bg-black text-white'
+                }`}
+            >
+                <div className="text-center max-w-md">
+                    <div className="mb-8">
+                        <div className={`w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center ${
+                            isDarkMode ? 'bg-black text-white' : 'bg-white text-black'
+                        }`}>
+                            <Target className="w-8 h-8" />
+                        </div>
+                        <h1 className="text-4xl font-bold mb-4">Upskill Advisor</h1>
+                        <p className="text-xl opacity-90 leading-relaxed">
+                            Get personalized learning recommendations to advance your career
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 opacity-75">
+                        <div className="flex items-center justify-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${isDarkMode ? 'bg-black' : 'bg-white'}`}></div>
+                            <span className="text-sm">AI-powered recommendations</span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${isDarkMode ? 'bg-black' : 'bg-white'}`}></div>
+                            <span className="text-sm">Personalized learning paths</span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${isDarkMode ? 'bg-black' : 'bg-white'}`}></div>
+                            <span className="text-sm">Career-focused curriculum</span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${isDarkMode ? 'bg-black' : 'bg-white'}`}></div>
+                            <span className="text-sm">Real-time performance metrics</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <p className="text-xs text-muted-foreground">When off, recommendations will use only local data.</p>
-          </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Building your personalized plan..." : "Get Learning Plan"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  )
+            {/* Right Side - Form Section */}
+            <div
+                className={`w-1/2 flex flex-col transition-colors duration-300 ${
+                    isDarkMode ? 'bg-black text-white' : 'bg-white text-black'
+                }`}
+            >
+                {/* Theme Toggle */}
+                <div className="flex justify-end p-6">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleTheme}
+                        className={`rounded-full p-2 transition-colors ${
+                            isDarkMode
+                                ? 'hover:bg-gray-800 text-white'
+                                : 'hover:bg-gray-100 text-black'
+                        }`}
+                    >
+                        {isDarkMode ? (
+                            <Sun className="h-5 w-5" />
+                        ) : (
+                            <Moon className="h-5 w-5" />
+                        )}
+                    </Button>
+                </div>
+
+                {/* Form Container */}
+                <div className="flex-1 flex items-center justify-center p-8 pt-0">
+                    <Card className={`w-full max-w-md border transition-colors ${
+                        isDarkMode
+                            ? 'bg-black border-gray-800 text-white'
+                            : 'bg-white border-gray-200 text-black'
+                    }`}>
+                        <CardHeader>
+                            <CardTitle className={isDarkMode ? 'text-white' : 'text-black'}>
+                                Get Started
+                            </CardTitle>
+                            <CardDescription className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                                Tell us about your background and career goals to receive tailored recommendations.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleSubmit} className="space-y-6" aria-busy={isLoading}>
+                                {/* Skills Section */}
+                                <div className="space-y-3">
+                                    <Label
+                                        htmlFor="skills"
+                                        className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}
+                                    >
+                                        Current Skills
+                                    </Label>
+                                    
+                                    {/* Add Skill Input */}
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="new-skill"
+                                            type="text"
+                                            placeholder="e.g., Python, SQL, JavaScript"
+                                            value={newSkill}
+                                            onChange={(e) => setNewSkill(e.target.value)}
+                                            className="flex-1"
+                                        />
+                                        <select
+                                            value={newSkillExpertise}
+                                            onChange={(e) => setNewSkillExpertise(e.target.value as "Beginner" | "Intermediate" | "Advanced")}
+                                            className="px-3 py-2 border rounded-md text-sm bg-white text-black"
+                                        >
+                                            <option value="Beginner">Beginner</option>
+                                            <option value="Intermediate">Intermediate</option>
+                                            <option value="Advanced">Advanced</option>
+                                        </select>
+                                        <Button
+                                            type="button"
+                                            onClick={addSkill}
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={!newSkill.trim()}
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+
+                                    {/* Skills List */}
+                                    {skills.length > 0 && (
+                                        <div className="space-y-2">
+                                            <div className="text-sm text-muted-foreground">Your Skills:</div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {skills.map((skill, index) => (
+                                                    <Badge
+                                                        key={index}
+                                                        variant="secondary"
+                                                        className={`${getExpertiseColor(skill.expertise)} flex items-center gap-1`}
+                                                    >
+                                                        {skill.name}
+                                                        <span className="text-xs">({skill.expertise})</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeSkill(index)}
+                                                            className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Years of Experience */}
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="years"
+                                        className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}
+                                    >
+                                        Years of Experience
+                                    </Label>
+                                    <Input
+                                        id="years"
+                                        type="number"
+                                        placeholder="e.g., 5"
+                                        value={years}
+                                        onChange={(e) => setYears(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                {/* Goal Role */}
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="goal_role"
+                                        className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}
+                                    >
+                                        Goal Role
+                                    </Label>
+                                    <Input
+                                        id="goal_role"
+                                        type="text"
+                                        placeholder="e.g., Senior Data Scientist"
+                                        value={goalRole}
+                                        onChange={(e) => setGoalRole(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                {/* Search Online Option */}
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="search_online"
+                                        checked={searchOnline}
+                                        onChange={(e) => setSearchOnline(e.target.checked)}
+                                        className="rounded"
+                                    />
+                                    <Label htmlFor="search_online" className="text-sm">
+                                        Include online course search for latest recommendations
+                                    </Label>
+                                </div>
+
+                                {/* Submit Button */}
+                                <Button 
+                                    type="submit" 
+                                    disabled={isLoading || skills.length === 0} 
+                                    className="w-full"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Clock className="h-4 w-4 mr-2 animate-spin" />
+                                            Analyzing your profile...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Target className="h-4 w-4 mr-2" />
+                                            Get Personalized Recommendations
+                                        </>
+                                    )}
+                                </Button>
+
+                                {/* Form Validation Messages */}
+                                {skills.length === 0 && (
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        Please add at least one skill to get recommendations
+                                    </p>
+                                )}
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
 }

@@ -1,112 +1,191 @@
-import axios from "axios"
+export interface SkillDetail {
+    name: string;
+    expertise: "Beginner" | "Intermediate" | "Advanced";
+}
 
-// Determine base URL from environment or fall back to dev proxy path
-const RAW_BASE = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined
-const BASE_URL = (RAW_BASE ? RAW_BASE.replace(/\/$/, "") : "/api/v1")
-
-// Initialize axios instance with base URL
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-})
-
-// Types used by UI form (frontend-only)
 export interface UserProfile {
-  skills: string[]
-  years: number
-  goal_role: string
-  // Whether to include online course search (mirrors backend AdviseRequest.search_online)
-  search_online?: boolean
+    skills: SkillDetail[];
+    years: number;
+    goal_role: string;
+    search_online: boolean;
 }
 
-// Backend-aligned types
-type Expertise = "Beginner" | "Intermediate" | "Advanced"
-interface SkillDetail { name: string; expertise: Expertise }
-interface BackendUserProfile {
-  current_skills: SkillDetail[]
-  goal_role: string
-  years_experience?: number
+export interface AdviseResult {
+    plan: Array<{
+        course_id?: string;
+        skill?: string;
+        action?: string;
+        resource?: string;
+        why?: string;
+        order?: number;
+        estimated_weeks?: number;
+    }>;
+    gap_map: Record<string, string[]>;
+    recommended_courses: Course[];
+    notes?: string;
+    metrics?: Record<string, any>;
+    alternative_plan?: AdviseResult;
+    timeline?: {
+        total_weeks: number;
+        phases?: Array<{
+            phase: string;
+            weeks: string;
+            focus: string;
+        }>;
+    };
 }
 
-export interface UserContext { session_id: string }
-
-interface AdviceRequest {
-  profile: BackendUserProfile
-  user_context?: UserContext
-  search_online?: boolean
+export interface Course {
+    course_id: string;
+    title: string;
+    skills: string[];
+    difficulty: string;
+    duration_weeks: number;
+    provider?: string;
+    url?: string;
+    metadata: Record<string, any>;
 }
 
-export interface CoursePlanStep {
-  // Backend returns a flexible dict; keep permissive typing
-  course_id?: string
-  why?: string
-  [key: string]: any
+export interface ApiResponse<T> {
+    request_id: string;
+    status: string;
+    data: T;
 }
 
-export interface AdviceData {
-  plan: CoursePlanStep[]
-  gap_map: Record<string, any>
-  recommended_courses?: any[]
-  notes?: string
-  // tolerate older/newer fields
-  [key: string]: any
+export interface MetricsData {
+    accuracy: Array<{
+        timestamp: string;
+        component: string;
+        operation: string;
+        accuracy_score: number;
+        total_items: number;
+        correct_items: number;
+        metadata: Record<string, any>;
+    }>;
+    latency: Array<{
+        timestamp: string;
+        component: string;
+        operation: string;
+        duration_ms: number;
+        success: boolean;
+        metadata: Record<string, any>;
+    }>;
+    cost: Array<{
+        timestamp: string;
+        component: string;
+        operation: string;
+        cost_usd: number;
+        tokens_used?: number;
+        model_name?: string;
+        metadata: Record<string, any>;
+    }>;
 }
 
-export interface ApiEnvelope<T = any> {
-  request_id: string
-  status: string
-  data: T
+export interface CourseStats {
+    total_courses: number;
+    providers: Record<string, number>;
+    difficulties: Record<string, number>;
+    categories: Record<string, number>;
+    top_skills: Record<string, number>;
 }
 
-function toBackendProfile(profile: UserProfile): BackendUserProfile {
-  const current_skills: SkillDetail[] = (profile.skills || [])
-    .filter(Boolean)
-    .map((name) => ({ name, expertise: "Beginner" as Expertise }))
-  return {
-    current_skills,
-    goal_role: profile.goal_role,
-    years_experience: typeof profile.years === "number" ? profile.years : undefined,
-  }
-}
+// Enhanced API functions
+export async function getAdvice(profile: UserProfile): Promise<AdviseResult> {
+    const response = await fetch("/api/v1/advise", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            profile: {
+                current_skills: profile.skills,
+                goal_role: profile.goal_role,
+                years_experience: profile.years,
+            },
+            user_context: {},
+            search_online: profile.search_online,
+            retrieval_mode: "hybrid",
+        }),
+    });
 
-/**
- * Centralized API service for getting advice from the backend
- * Handles the wrapped response structure and maps UI profile to backend schema
- */
-export async function getAdvice(profile: UserProfile): Promise<AdviceData> {
-  try {
-    const requestPayload: AdviceRequest = {
-      profile: toBackendProfile(profile),
-      user_context: {
-        session_id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
-      },
-      search_online: profile.search_online ?? true,
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to fetch advice");
     }
 
-    const response = await apiClient.post("/advise", requestPayload)
+    const result: ApiResponse<AdviseResult> = await response.json();
+    return result.data;
+}
 
-    const raw = response.data
+export async function getAdviceCompare(profile: UserProfile): Promise<AdviseResult[]> {
+    const response = await fetch("/api/v1/advise/compare", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            profile: {
+                current_skills: profile.skills,
+                goal_role: profile.goal_role,
+                years_experience: profile.years,
+            },
+            user_context: {},
+            search_online: profile.search_online,
+        }),
+    });
 
-    // Support both raw and wrapped API responses
-    if (raw && typeof raw === "object") {
-      if ("plan" in raw && "gap_map" in raw) {
-        return raw as AdviceData
-      }
-      if ("data" in raw) {
-        const env = raw as ApiEnvelope<AdviceData>
-        if (env.status?.toLowerCase?.() === "ok" && env.data) return env.data
-        if (env.data) return env.data
-      }
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to fetch advice comparison");
     }
 
-    throw new Error("Unexpected API response shape")
-  } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const msg = (error.response?.data?.detail || error.response?.data?.message || error.message)
-      throw new Error(`API Error: ${msg}`)
+    const result: ApiResponse<AdviseResult[]> = await response.json();
+    return result.data;
+}
+
+export async function getMetrics(): Promise<MetricsData> {
+    const response = await fetch("/api/v1/metrics/reports");
+    
+    if (!response.ok) {
+        throw new Error("Failed to fetch metrics");
     }
-    throw error
-  }
+
+    const result: ApiResponse<MetricsData> = await response.json();
+    return result.data;
+}
+
+export async function getCourseStats(): Promise<CourseStats> {
+    const response = await fetch("/api/v1/courses/stats");
+    
+    if (!response.ok) {
+        throw new Error("Failed to fetch course statistics");
+    }
+
+    const result: ApiResponse<CourseStats> = await response.json();
+    return result.data;
+}
+
+export async function searchCourses(query: string, filters?: {
+    providers?: string[];
+    difficulties?: string[];
+    skills?: string[];
+    categories?: string[];
+    is_free?: boolean;
+}): Promise<{ courses: Course[]; pagination: any }> {
+    const params = new URLSearchParams();
+    if (query) params.append("query", query);
+    if (filters?.providers) filters.providers.forEach(p => params.append("providers", p));
+    if (filters?.difficulties) filters.difficulties.forEach(d => params.append("difficulties", d));
+    if (filters?.skills) filters.skills.forEach(s => params.append("skills", s));
+    if (filters?.categories) filters.categories.forEach(c => params.append("categories", c));
+    if (filters?.is_free !== undefined) params.append("is_free", filters.is_free.toString());
+
+    const response = await fetch(`/api/v1/courses/search?${params.toString()}`);
+    
+    if (!response.ok) {
+        throw new Error("Failed to search courses");
+    }
+
+    const result: ApiResponse<{ courses: Course[]; pagination: any }> = await response.json();
+    return result.data;
 }
